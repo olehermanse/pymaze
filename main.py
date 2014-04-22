@@ -3,7 +3,7 @@
 # DISCLAIMER: Unoptimized and uncommented - Proceed at your own risk.
 
 # =================INIT====================
-import pygame, sys
+import pygame, sys, os.path
 sys.setrecursionlimit(10000) 
 from pygame.locals import *
 pygame.init()
@@ -11,8 +11,8 @@ fpsClock = pygame.time.Clock()
 
 # =================VARIABLES====================
 # Constants
-mazeWidth = 23
-mazeHeight = 19
+mazeWidth = 22
+mazeHeight = 18
 u = pixelUnit = 30
 windowWidth = mazeWidth * pixelUnit
 windowHeight = mazeHeight * pixelUnit
@@ -25,6 +25,7 @@ primes = [37,73,43,47,2,83,7,89,41,17,67,71,101,97,3,19,61,5,11,23,53,59,29,13,7
 numbers = [3755,8187,7883,9111,2503,5838,9544,1001,2246,1840,1160,1069,9369,9540,3213]
 level = 1
 seed = 0
+seedPlus = 0
 
 # Corner variables - gameplay
 checks = [0,0,0]
@@ -32,7 +33,15 @@ checksc = [(1, mazeHeight-2),(mazeWidth-2, 1),(mazeWidth-2, mazeHeight-2)]
 
 # Player variables
 score = 0
+scorePerLevel = 0
 playerx, playery = 1,1
+minutes = 0
+seconds = 0
+secondsLevel = 0
+secondsTotal = 0
+secondsAverage = 0
+frames = 0
+fps = 14
 
 # Pygame window
 windowSurfaceObj = pygame.display.set_mode((windowWidth,windowHeight))
@@ -56,15 +65,38 @@ def drawMaze():
 			if maze[x,y] == 1:
 				drawSquare(x,y,blackColor)
 
+def updateText():
+	global score, level, scorePerLevel, minutes, seconds, frames, secondsLevel, secondsAverage
+	levelmsg = ' Level:'+ str(level)+'('+str(seedPlus)+')'
+	scoremsg = ' Score:'+str(score)+'~'+str(scorePerLevel)+'per level'
+	timemsg = ' - Time:'+str(minutes)+'m'+str(seconds)+'s'
+	if( frames < 10 ):
+		timemsg = timemsg+'0'
+	timemsg = timemsg+str(frames)+'f Current:'+str(secondsLevel)
+	timemsg = timemsg+'s Average: '+str(secondsAverage)+'s'
+	msg = 'PyMaze -'+levelmsg+scoremsg+timemsg
+	pygame.display.set_caption(msg)
+
 # Draw maze, objectives and player. Update score display
 def drawScene():
-	pygame.display.set_caption('PyMaze - Level:'+str(level)+' Score:'+str(score))
+	global minutes, seconds, frames, secondsLevel, secondsTotal
+	frames += 1
+	if(frames >= fps):
+		seconds += 1
+		secondsLevel += 1
+		secondsTotal += 1
+		frames = 0
+	if(seconds >= 60):
+		minutes += 1
+		seconds = 0
+	updateText()
 	windowSurfaceObj.fill(whiteColor)
 	drawSquare(playerx,playery,redColor)
 	drawMaze()
 	for i in range(0,3):
 		if checks[i] == 0:
 			drawSquare(*checksc[i], c=greenColor)
+	pygame.display.update()
 			
 # Check if game world coordinate is outside of maze
 def isOutside(x,y):
@@ -145,17 +177,20 @@ def cellGen(x,y):
 		pygame.display.update()
 	return
 
-# Generate a maze based on seed and level
-def generate():
+def resetPlayer():
+	global checks, playerx, playery, secondsLevel
+	playerx = playery = 1
+	secondsLevel = 0
+	checks = [0,0,0]
+	
 	global kUp, kLeft, kDown, kRight
 	global kW, kA, kS, kD
 	kUp = kLeft = kDown = kRight = False
 	kW = kA = kS = kD = False
-	
-	global checks, checksc
-	global playerx, playery
-	playerx = playery = 1
-	checks = [0,0,0]
+
+# Generate a maze based on seed and level
+def generate():
+	resetPlayer()
 	for x in range(0, mazeWidth):
 		for y in range(0, mazeHeight):
 			maze[x,y] = 0
@@ -163,8 +198,8 @@ def generate():
 				maze[x,y] = 1
 	drawScene()
 	i = x = y = 0
-	global seed, level
-	seed = level + 111 + level/3 + level/5
+	global seed, level, seedPlus
+	seed = 111 + 3*(level-1) + level/3 + level/5 + seedPlus
 	n = seed%15
 	rand = {}
 	for i in range(0,256):
@@ -194,15 +229,38 @@ def generate():
 			if(x > 3 and (x+(4*y/3))%space == 0):
 				for y3 in range(y, y+mazeHeight/3):
 					cellGen(x, y3)
-	
+
+
+def nextLevel():
+	global level, score, scorePerLevel, seedPlus
+	global minutes, seconds, secondsLevel, secondsTotal, secondsAverage
+	score += 1
+	if(secondsLevel < 60):
+		score += 1
+	secondsAverage = secondsTotal/level
+	if(secondsAverage < 20):
+		score += 20 - secondsAverage
+	if(secondsLevel < 20):
+		score += 20 - secondsLevel
+	scorePerLevel = score/level
+	level += 1
+	seedPlus = 0
+	if(playerx > 1):
+		seedPlus += 1
+	if(playery > 1):
+		seedPlus += 2
+	seedPlus -= 1
+	writeFile()
+	generate()
+
+
 # Moves player by (x*unit, y*unit)
+# All game logic is done through this function
+# since nothing happens when standing still
 def playerMove(x,y):
-	global playerx
-	global playery
-	global score
-	global level
-	global checks
-	global checksc
+	global playerx, playery, score
+	global level, secondsLevel, minutes, seconds
+	global checks, checksc
 	playerx += x
 	playery += y
 	if(isBlocked(playerx,playery)):
@@ -211,12 +269,10 @@ def playerMove(x,y):
 		return
 	c = (playerx,playery)
 	for i in range(0,3):
-		if(checksc[i] == c):
+		if(checksc[i] == c and checks[i] == 0):
 			checks[i] = 1
-			score += 1
 			if(checks[0] == 1 and checks[1] == 1 and checks[2] == 1):
-				level += 1
-				generate()
+				nextLevel()
 				return
 			
 # Move player based on keyboard input
@@ -230,7 +286,37 @@ def movement():
 	if kD or kRight:
 		playerMove(1,0)
 
+def exitPyMaze():
+	pygame.quit()
+	sys.exit()
+
+def readFile():
+	if os.path.isfile('save.txt'):
+		f = open('save.txt', 'r')
+		global level, score, scorePerLevel, seedPlus
+		global minutes, seconds, frames, secondsTotal, secondsAverage
+		level, score, minutes, seconds, frames , seedPlus = map(int, f.readline().split())
+		f.close()
+		if(level <= 1 or seedPlus >= 3):
+			print('PyMaze Error: Corrupt Save')
+			exitPyMaze()
+		secondsTotal = minutes*60 + seconds
+		scorePerLevel = score/(level-1)
+		secondsAverage = secondsTotal/(level-1)
+		if(scorePerLevel > 150 or secondsAverage < 3):
+			print('PyMaze Error: Corrupt Save')
+			exitPyMaze()
+
+def writeFile():
+	f = open('save.txt', 'w')
+	temp = str(level)+' '+str(score)
+	temp = temp+' '+str(minutes)+' '+str(seconds)+' '+str(frames)
+	temp = temp+' '+str(seedPlus)+'\n'
+	f.write(temp)
+	f.close()
+
 # Main:
+readFile()
 generate()
 while True:
 	#Handle events:
@@ -238,8 +324,7 @@ while True:
 	for event in pygame.event.get():
 		events += 1
 		if event.type == QUIT:
-			pygame.quit()
-			sys.exit()
+			exitPyMaze()
 		# Movement is done once per key down event
 		# As well as once per frame if key is held down.
 		elif event.type == KEYDOWN:
@@ -268,6 +353,7 @@ while True:
 				kRight = True
 				movement()
 			if event.key == K_SPACE:
+				readFile()
 				generate()
 			if event.key == K_ESCAPE:
 				pygame.event.post(pygame.event.Event(QUIT))
@@ -290,7 +376,6 @@ while True:
 				kRight = False
 	#Drawing scene and updating window:
 	if(events == 0):
-		movement()
+		movement()		#All game logic is done through movement function
 	drawScene()
-	pygame.display.update()
-	fpsClock.tick(12)		# 12 FPS
+	fpsClock.tick(fps)
