@@ -192,6 +192,7 @@ def cellGen(x,y):
 		pygame.display.update()
 	return
 
+# resets player position and the level
 def resetPlayer():
 	global checks, playerx, playery, secondsLevel
 	playerx = playery = 1
