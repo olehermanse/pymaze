@@ -42,6 +42,9 @@ secondsTotal = 0
 secondsAverage = 0
 frames = 0
 fps = 14
+highScore = 0
+oldScore = 0
+playerName = 'P1'
 
 # Pygame window
 windowSurfaceObj = pygame.display.set_mode((windowWidth,windowHeight))
@@ -52,6 +55,17 @@ whiteColor = pygame.Color(255,255,255)
 blackColor = pygame.Color(0,0,0)
 redColor = pygame.Color(255,0,0)
 greenColor = pygame.Color(0,255,0)
+
+def minit():
+	global level, seed, seedPlus
+	level = 1
+	seed = seedPlus = 0
+	global score, scorePerLevel, highScore, oldScore
+	score = scorePerLevel = highScore = oldScore = 0
+	global minutes, seconds, secondsLevel, secondsTotal, secondsAverage
+	minutes = seconds = secondsLevel = secondsTotal = secondsAverage = 0
+	global frames
+	frames = 0
 
 # Draw a square with color c at (x,y) in our grid of squares with u width
 def drawSquare(x,y,c):
@@ -66,7 +80,8 @@ def drawMaze():
 				drawSquare(x,y,blackColor)
 
 def updateText():
-	global score, level, scorePerLevel, minutes, seconds, frames, secondsLevel, secondsAverage
+	global score, level, scorePerLevel, playerName
+	global minutes, seconds, frames, secondsLevel, secondsAverage
 	levelmsg = ' Level:'+ str(level)+'('+str(seedPlus)+')'
 	scoremsg = ' Score:'+str(score)+'~'+str(scorePerLevel)+'per level'
 	timemsg = ' - Time:'+str(minutes)+'m'+str(seconds)+'s'
@@ -74,7 +89,7 @@ def updateText():
 		timemsg = timemsg+'0'
 	timemsg = timemsg+str(frames)+'f Current:'+str(secondsLevel)
 	timemsg = timemsg+'s Average: '+str(secondsAverage)+'s'
-	msg = 'PyMaze -'+levelmsg+scoremsg+timemsg
+	msg = 'PyMaze - '+playerName+' - '+levelmsg+scoremsg+timemsg
 	pygame.display.set_caption(msg)
 
 # Draw maze, objectives and player. Update score display
@@ -232,17 +247,21 @@ def generate():
 
 
 def nextLevel():
-	global level, score, scorePerLevel, seedPlus
+	global level, score, scorePerLevel, seedPlus, oldScore, highScore
 	global minutes, seconds, secondsLevel, secondsTotal, secondsAverage
 	score += 1
-	if(secondsLevel < 60):
-		score += 1
+	if(secondsLevel < 200):
+		score += (200-secondsLevel)/10
+		
 	secondsAverage = secondsTotal/level
 	if(secondsAverage < 20):
 		score += 20 - secondsAverage
 	if(secondsLevel < 20):
 		score += 20 - secondsLevel
 	scorePerLevel = score/level
+	if(level == 10 and (score-oldScore) > highScore):
+		highScore = score-oldScore
+	oldScore = score
 	level += 1
 	seedPlus = 0
 	if(playerx > 1):
@@ -293,9 +312,10 @@ def exitPyMaze():
 def readFile():
 	if os.path.isfile('save.txt'):
 		f = open('save.txt', 'r')
-		global level, score, scorePerLevel, seedPlus
+		global level, score, scorePerLevel, seedPlus, playerName
 		global minutes, seconds, frames, secondsTotal, secondsAverage
 		level, score, minutes, seconds, frames , seedPlus = map(int, f.readline().split())
+		playerName = f.readline()[:-1]
 		f.close()
 		if(level <= 1 or seedPlus >= 3):
 			print('PyMaze Error: Corrupt Save')
@@ -312,12 +332,80 @@ def writeFile():
 	temp = str(level)+' '+str(score)
 	temp = temp+' '+str(minutes)+' '+str(seconds)+' '+str(frames)
 	temp = temp+' '+str(seedPlus)+'\n'
+	temp = temp+playerName+'\n'
+	f.write(temp)
+	f.close()
+	
+	
+def pad(s, n):
+	while(len(s) < n):
+		s = s + ' '
+	return s
+
+def saveHighScore():
+	global score, highScore, level, scorePerLevel, minutes, seconds, frames, playerName
+	f = open('highscores.txt', 'a')
+	labelS = 'lvl.' + str(level) + ' ' + playerName + ': '
+	highS = ' Best = ' + str(highScore)
+	totalS = ' Total = '+str(score)
+	splS = ' SPL = ' + str(scorePerLevel)
+	timeS = ' Time = '+str(minutes)+'m '+str(seconds)+'s '+str(frames)+'f'
+	labelS = pad(labelS, 26)
+	highS = pad(highS, 14)
+	totalS = pad(totalS, 16)
+	splS = pad(splS, 12)
+	temp = labelS + highS + totalS + splS + timeS + '\n'
+	f.write(temp)
+	f.close()
+	saveHSData()
+	
+def saveHSData():
+	global score, highScore, level, scorePerLevel, minutes, seconds, frames, playerName
+	f = open('hsdata.txt', 'a')
+	
+	temp = str(level)+' '+str(highScore)+' '+str(score)+' '+str(scorePerLevel)+' '
+	temp = temp + str(minutes)+' '+str(seconds)+' '+str(frames)+' '+playerName+'\n'
 	f.write(temp)
 	f.close()
 
+def setName():
+	global playerName
+	doneTyping = False
+	tempName = ''
+	while(doneTyping == False):
+		events = 0
+		for event in pygame.event.get():
+			events += 1
+			if event.type == QUIT:
+				exitPyMaze()
+			elif event.type == KEYDOWN:
+				if event.key == K_RETURN:
+					doneTyping = True
+				elif event.key == K_ESCAPE:
+					pygame.event.post(pygame.event.Event(QUIT))
+				else:
+					tempName = tempName + event.unicode
+		
+		msg = 'Enter name: ' + tempName
+		pygame.display.set_caption(msg)
+		fpsClock.tick(fps)
+	
+	playerName = tempName
+	
+
+def restart():
+	minit()
+	if os.path.isfile('save.txt'):
+		os.remove('save.txt')
+	generate()
+	setName()
+
 # Main:
+minit()
 readFile()
 generate()
+if(level == 1):
+	setName()
 while True:
 	#Handle events:
 	events = 0
@@ -340,6 +428,9 @@ while True:
 			if event.key == K_d:
 				kD = True
 				movement()
+			if event.key == K_r:
+				saveHighScore()
+				restart()
 			if event.key == K_UP:
 				kUp = True
 				movement()
