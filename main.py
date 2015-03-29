@@ -1,7 +1,7 @@
 '''============================================================================
 
 File: main.py
-From project: Maze generator and game in Python
+From project: pyMaze - Maze generator and game in Python
 Date: 2015-03-29
 Author: olehermanse ( http://www.github.com/olehermanse )
 License: The MIT License (MIT)
