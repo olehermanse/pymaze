@@ -1,4 +1,4 @@
-File: README.md
+File: README.md<br>
 Project name: pyMaze<br>
 Date: 2015-03-29<br>
 Author: olehermanse ( http://www.github.com/olehermanse )<br>
