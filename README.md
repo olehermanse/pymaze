@@ -1,7 +1,9 @@
 File: README.md<br>
 Project name: pyMaze<br>
-Date: 2015-03-29<br>
+Date: 2015-04-01<br>
 Author: olehermanse ( http://www.github.com/olehermanse )<br>
+**Video:** https://www.youtube.com/watch?v=yCQLluCn3rc<br>
+**Github repository:** https://github.com/olehermanse/pyMaze---Maze-Generator-and-Game
 License: The MIT License<br>
 
 The MIT License (MIT)
@@ -27,5 +29,3 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.<br>
 <br>
 
-**Video:** https://www.youtube.com/watch?v=yCQLluCn3rc<br>
-**Github repo:** https://github.com/olehermanse/pyMaze---Maze-Generator-and-Game
