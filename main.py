@@ -34,7 +34,7 @@ THE SOFTWARE.
 
 # =================INIT====================
 import pygame, sys, os.path
-sys.setrecursionlimit(10000) 
+sys.setrecursionlimit(10000)
 from pygame.locals import *
 pygame.init()
 fpsClock = pygame.time.Clock()
@@ -142,14 +142,14 @@ def drawScene():
 		if checks[i] == 0:
 			drawSquare(*checksc[i], c=greenColor)
 	pygame.display.update()
-			
+
 # Check if game world coordinate is outside of maze
 def isOutside(x,y):
 	if x<0 or y<0 or x>=mazeWidth or y>=mazeHeight:
 		return True
 	return False
 
-# Check if game world coordinate is on the edge of the maze	
+# Check if game world coordinate is on the edge of the maze
 def isBorder(x,y):
 	if x == 0 and (y>=0 and y < mazeHeight):
 		return True
@@ -228,7 +228,7 @@ def resetPlayer():
 	playerx = playery = 1
 	secondsLevel = 0
 	checks = [0,0,0]
-	
+
 	global kUp, kLeft, kDown, kRight
 	global kW, kA, kS, kD
 	kUp = kLeft = kDown = kRight = False
@@ -254,7 +254,7 @@ def generate():
 		rand[i] = seed * numbers[n] + i
 		for p in range(0, 27):
 			rand[i] += i/primes[p]
-	
+
 	i = 0
 	while i<255:
 		num = rand[i]
@@ -283,7 +283,7 @@ def nextLevel():
 	score += 1
 	if(secondsLevel < 200):
 		score += (200-secondsLevel)/10
-		
+
 	secondsAverage = secondsTotal/level
 	if(secondsAverage < 20):
 		score += 20 - secondsAverage
@@ -324,7 +324,7 @@ def playerMove(x,y):
 			if(checks[0] == 1 and checks[1] == 1 and checks[2] == 1):
 				nextLevel()
 				return
-			
+
 # Move player based on keyboard input
 def movement():
 	if kW or kUp:
@@ -366,8 +366,8 @@ def writeFile():
 	temp = temp+playerName+'\n'
 	f.write(temp)
 	f.close()
-	
-	
+
+
 def pad(s, n):
 	while(len(s) < n):
 		s = s + ' '
@@ -389,11 +389,11 @@ def saveHighScore():
 	f.write(temp)
 	f.close()
 	saveHSData()
-	
+
 def saveHSData():
 	global score, highScore, level, scorePerLevel, minutes, seconds, frames, playerName
 	f = open('hsdata.txt', 'a')
-	
+
 	temp = str(level)+' '+str(highScore)+' '+str(score)+' '+str(scorePerLevel)+' '
 	temp = temp + str(minutes)+' '+str(seconds)+' '+str(frames)+' '+playerName+'\n'
 	f.write(temp)
@@ -416,13 +416,13 @@ def setName():
 					pygame.event.post(pygame.event.Event(QUIT))
 				else:
 					tempName = tempName + event.unicode
-		
+
 		msg = 'Enter name: ' + tempName
 		pygame.display.set_caption(msg)
 		fpsClock.tick(fps)
-	
+
 	playerName = tempName
-	
+
 
 def restart():
 	minit()
