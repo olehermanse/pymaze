@@ -245,7 +245,7 @@ def generate():
 	drawScene()
 	i = x = y = 0
 	global seed, level, seedPlus
-	seed = 111 + 3*(level-1) + level/3 + level/5 + seedPlus
+	seed = 111 + 3*(level-1) + level//3 + level//5 + seedPlus
 	n = seed%15
 	rand = {}
 	for i in range(0,256):
@@ -253,7 +253,7 @@ def generate():
 			n=0
 		rand[i] = seed * numbers[n] + i
 		for p in range(0, 27):
-			rand[i] += i/primes[p]
+			rand[i] += i//primes[p]
 
 	i = 0
 	while i<255:
@@ -270,10 +270,10 @@ def generate():
 			x2 = mazeWidth-1-x
 			y2 = mazeHeight-1-y
 			cellGen(x2, y2)
-			cellGen(x2/2, y2/2)
+			cellGen(x2//2, y2//2)
 			space = 2+level%4
-			if(x > 3 and (x+(4*y/3))%space == 0):
-				for y3 in range(y, y+mazeHeight/3):
+			if(x > 3 and (x+(4*y//3))%space == 0):
+				for y3 in range(y, y+mazeHeight//3):
 					cellGen(x, y3)
 
 
@@ -282,14 +282,14 @@ def nextLevel():
 	global minutes, seconds, secondsLevel, secondsTotal, secondsAverage
 	score += 1
 	if(secondsLevel < 200):
-		score += (200-secondsLevel)/10
+		score += (200-secondsLevel)//10
 
-	secondsAverage = secondsTotal/level
+	secondsAverage = secondsTotal//level
 	if(secondsAverage < 20):
 		score += 20 - secondsAverage
 	if(secondsLevel < 20):
 		score += 20 - secondsLevel
-	scorePerLevel = score/level
+	scorePerLevel = score//level
 	if(level == 10 and (score-oldScore) > highScore):
 		highScore = score-oldScore
 	oldScore = score
@@ -352,8 +352,8 @@ def readFile():
 			print('PyMaze Error: Corrupt Save')
 			exitPyMaze()
 		secondsTotal = minutes*60 + seconds
-		scorePerLevel = score/(level-1)
-		secondsAverage = secondsTotal/(level-1)
+		scorePerLevel = score//(level-1)
+		secondsAverage = secondsTotal//(level-1)
 		if(scorePerLevel > 150 or secondsAverage < 3):
 			print('PyMaze Error: Corrupt Save')
 			exitPyMaze()
